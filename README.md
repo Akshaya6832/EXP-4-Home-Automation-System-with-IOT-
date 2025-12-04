@@ -27,106 +27,61 @@ When we apply an active high signal to the signal pin of the relay module from a
 
 
 # Program:
-```c
-#include <LiquidCrystal.h>
-#include<Servo.h>
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-const int trig_pin=10;
-const int echo_pin=7;
-long duration;
-int distance;
-int servopin=8;
-Servo servo_test;
-const int pirpin=13;
-const int light=6;
-int sensorstate=0;
-const int temp_pin=A0;
-float temp;
-const int motor=9;
+```c++
+#include <Servo.h>
+
+int dist = 0;
+
+long readUltrasonicDistance(int triggerPin, int echoPin)
+{
+  pinMode(triggerPin, OUTPUT);  // Clear the trigger
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigger pin to HIGH state for 10 microseconds
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+  // Reads the echo pin, and returns the sound wave travel time in microseconds
+  return pulseIn(echoPin, HIGH);
+}
+
+Servo servo_8;
 
 void setup()
 {
-  pinMode(temp_pin,INPUT);
-  pinMode(trig_pin,OUTPUT);
-  pinMode(echo_pin,INPUT);
-  Serial.begin(9600);
-  servo_test.attach(servopin);
-  pinMode(light,OUTPUT);
-  pinMode(pirpin,INPUT);
-  lcd.begin(16, 2);
-  lcd.setCursor(3, 0);
-  lcd.print("G  CHANDAN");
-  lcd.setCursor(4, 1);
-  lcd.print("PROJECTS");
-  delay(800);
-  lcd.clear();
-  lcd.setCursor(4, 0);
-  lcd.print("PROJECT");
-  lcd.setCursor(0, 1);
-  lcd.print("HOME AUTOMATION");
-  delay(800);
-  lcd.clear(); 
+  servo_8.attach(8, 500, 2500);
+
+  pinMode(2, INPUT);
+  pinMode(12, OUTPUT);
+  pinMode(A0, INPUT);
+  pinMode(9, OUTPUT);
 }
 
 void loop()
 {
-  digitalWrite(trig_pin,LOW);
-  delayMicroseconds(2);
-  digitalWrite(trig_pin,HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trig_pin,LOW);
-  duration = pulseIn(echo_pin,HIGH);
-  distance= duration*0.034/2;
-  
-  if(distance<100)
-  {
-  servo_test.write(90);
-  delay(3000);
-  servo_test.write(0);
-  delay(5000);
-  lcd.setCursor(0,1);
-  lcd.print("   open the gate  ");
+  dist = 0.01723 * readUltrasonicDistance(7, 7);
+  if (dist <= 100) {
+    servo_8.write(90);
+    delay(1000); // Wait for 1000 millisecond(s)
+  } else {
+    servo_8.write(0);
+    delay(1000); // Wait for 1000 millisecond(s)
   }
-  else
-  {
-      
-   lcd.setCursor(0,1);
-   lcd.print("  close the gate  ");
+  if (digitalRead(2) == 1) {
+    digitalWrite(12, HIGH);
+    delay(1000); // Wait for 1000 millisecond(s)
+  } else {
+    digitalWrite(12, LOW);
+    delay(1000); // Wait for 1000 millisecond(s)
   }
-    
-   sensorstate=digitalRead(pirpin);
-  if(sensorstate)
-  {
-    digitalWrite(light,HIGH);
-    lcd.setCursor(0,1);
-    lcd.print("  On the lights   ");
-    delay(1000);
+  if (analogRead(A0) > 200) {
+    digitalWrite(9, HIGH);
+    delay(1000); // Wait for 1000 millisecond(s)
+  } else {
+    digitalWrite(9, LOW);
+    delay(1000); // Wait for 1000 millisecond(s)
   }
-  else
-  {
-    digitalWrite(light,LOW);
-     delay(1000);
-  }
-  
-  temp=analogRead(temp_pin)*0.00488*100;
-  Serial.print("Temperature: ");
-  Serial.println(temp,0);
-  delay(2000);
-  if(temp>=60)
-  {
-    lcd.clear();
-    digitalWrite(motor,1);
-    lcd.setCursor(0,1);
-    lcd.print("FAN IS ON");
-    delay(1000);
-   }
-  else
- {
-    lcd.clear();
-    lcd.setCursor(0,1);
-    lcd.print("FAN IS OFF");
-    digitalWrite(motor,0);
-}
 }
   
 ```
